@@ -21,9 +21,11 @@ import {
   FileSpreadsheet, FileImage, FileArchive, FileType2, History, Paperclip, MessageSquare,
 } from "lucide-react";
 import {
-  TENDERS, TEAM, type Tender, priorityColor, tenderStatusColor, userById,
+  TENDERS, TEAM, type Tender, priorityColor, tenderStatusColor, taskStatusColor, userById,
 } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth";
+import { useTasks } from "@/lib/task-store";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/tenders")({ component: TendersPage });
@@ -253,6 +255,10 @@ function FileIcon({ ext }: { ext: string }) {
 }
 
 function TenderDetail({ tender }: { tender: Tender }) {
+  const { user } = useAuth();
+  const { tasksForTender, addTask } = useTasks();
+  const tenderTasks = tasksForTender(tender.id);
+  const [assignOpen, setAssignOpen] = useState(false);
   const lead = userById(tender.bdResponsible);
   const supp = userById(tender.supportingLead);
   const docs = [
