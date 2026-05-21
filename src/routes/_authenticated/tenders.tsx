@@ -283,12 +283,62 @@ function TenderDetail({ tender }: { tender: Tender }) {
       </SheetHeader>
 
       <Tabs defaultValue="overview" className="mt-4">
-        <TabsList className="grid grid-cols-4 w-full">
+        <TabsList className="grid grid-cols-5 w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="tasks">Tasks ({tenderTasks.length})</TabsTrigger>
           <TabsTrigger value="documents">Documents ({docs.length})</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="tasks" className="space-y-3 mt-4">
+          {user?.role === "manager" && (
+            <div className="flex justify-end">
+              <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="bg-brand-gradient text-brand-foreground">
+                    <Plus className="h-4 w-4 mr-2" />Assign Task
+                  </Button>
+                </DialogTrigger>
+                <AssignTaskDialog
+                  tender={tender}
+                  onClose={() => setAssignOpen(false)}
+                  onAssign={(data) => {
+                    const created = addTask({ ...data, linkedTo: tender.id });
+                    toast.success(`Task assigned: ${created.id}`, { description: `Assigned to ${userById(created.assignee)?.name}` });
+                    setAssignOpen(false);
+                  }}
+                />
+              </Dialog>
+            </div>
+          )}
+          {tenderTasks.length === 0 ? (
+            <Card className="border-dashed"><CardContent className="p-6 text-center text-sm text-muted-foreground">
+              No tasks for this tender yet. {user?.role === "manager" && "Click Assign Task to create one."}
+            </CardContent></Card>
+          ) : (
+            <div className="divide-y border rounded-lg">
+              {tenderTasks.map((tk) => {
+                const u = userById(tk.assignee);
+                return (
+                  <div key={tk.id} className="p-3 flex items-center gap-3 hover:bg-accent/40">
+                    <div className="h-9 w-9 rounded-full bg-brand-gradient text-brand-foreground text-[10px] font-semibold grid place-items-center">{u?.initials}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{tk.title}</div>
+                      <div className="text-xs text-muted-foreground">{tk.id} · {u?.name} · Due {new Date(tk.dueDate).toLocaleDateString()}</div>
+                      <Progress value={tk.progress} className="h-1 mt-2" />
+                    </div>
+                    <div className="flex flex-col gap-1 items-end">
+                      <Badge variant="outline" className={priorityColor(tk.priority)}>{tk.priority}</Badge>
+                      <Badge variant="outline" className={taskStatusColor(tk.status)}>{tk.status}</Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
 
         <TabsContent value="overview" className="space-y-4 mt-4">
           <Card>
