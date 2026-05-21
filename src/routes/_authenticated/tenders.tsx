@@ -458,3 +458,89 @@ function TenderDetail({ tender }: { tender: Tender }) {
     </>
   );
 }
+
+interface AssignTaskData {
+  title: string;
+  description: string;
+  priority: "Critical" | "High" | "Medium" | "Low";
+  assignee: string;
+  dueDate: string;
+}
+
+function AssignTaskDialog({
+  tender,
+  onClose,
+  onAssign,
+}: {
+  tender: Tender;
+  onClose: () => void;
+  onAssign: (data: AssignTaskData) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<AssignTaskData["priority"]>("High");
+  const [assignee, setAssignee] = useState<string>(tender.assignedMembers[1] ?? tender.assignedMembers[0] ?? TEAM[1].id);
+  const [dueDate, setDueDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 10);
+  });
+
+  const candidates = TEAM.filter((m) => m.role === "member");
+
+  const submit = () => {
+    if (!title.trim()) {
+      toast.error("Task title is required");
+      return;
+    }
+    onAssign({ title: title.trim(), description: description.trim(), priority, assignee, dueDate });
+  };
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Assign Task</DialogTitle>
+        <DialogDescription>Create and assign a task linked to <span className="font-medium text-foreground">{tender.id}</span> — {tender.name}.</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-2">
+        <div className="space-y-1.5">
+          <Label>Task title</Label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Prepare technical compliance matrix" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Description</Label>
+          <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Scope, deliverables, references…" />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label>Assign to</Label>
+            <Select value={assignee} onValueChange={setAssignee}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {candidates.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.name} — {m.designation}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Priority</Label>
+            <Select value={priority} onValueChange={(v) => setPriority(v as AssignTaskData["priority"])}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{["Critical", "High", "Medium", "Low"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Due date</Label>
+            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button className="bg-brand-gradient text-brand-foreground" onClick={submit}>Assign Task</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
