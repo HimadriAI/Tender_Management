@@ -154,3 +154,168 @@ function OffersPage() {
     </div>
   );
 }
+
+function OField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function AddOfferDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <DialogContent className="max-w-4xl">
+      <DialogHeader>
+        <DialogTitle>Add New Offer</DialogTitle>
+        <DialogDescription>Capture all fields from the BD Live Offer template.</DialogDescription>
+      </DialogHeader>
+      <div className="max-h-[70vh] overflow-y-auto pr-1 space-y-5 py-2">
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Identification</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <OField label="Sl. No."><Input /></OField>
+            <OField label="TEL Tender Ref"><Input placeholder="TEL/26/008" /></OField>
+            <OField label="Name of Work"><Input /></OField>
+            <OField label="State"><Input /></OField>
+            <OField label="Location"><Input /></OField>
+            <OField label="Customer"><Input /></OField>
+            <OField label="Sector">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["O&G", "Fertilizer", "Power", "Petrochem", "Steel"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+            <OField label="Job Type">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["EPC", "LSTK", "Service", "IR", "Supply"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+            <OField label="Job Nature">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["Known", "Existing", "New"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+            <OField label="Site"><Input /></OField>
+            <OField label="PMC"><Input /></OField>
+          </div>
+        </section>
+
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Dates & Approvals</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <OField label="Tender Publish Date"><Input type="date" /></OField>
+            <OField label="Original Due Date"><Input type="date" /></OField>
+            <OField label="Revised Due Date"><Input type="date" /></OField>
+            <OField label="Go / No Go">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["Go", "No Go", "Pending"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+            <OField label="Bid / No Bid Meeting"><Input type="date" /></OField>
+            <OField label="Bid / No Bid Approval Date"><Input type="date" /></OField>
+            <OField label="Internal Estimate Date"><Input type="date" /></OField>
+            <OField label="Participants in Review"><Input placeholder="Comma-separated names" /></OField>
+          </div>
+        </section>
+
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Team</div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <OField label="BD Responsible Person">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{TEAM.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+            <OField label="Supporting Team Lead">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{TEAM.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+          </div>
+        </section>
+
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Estimate (Cr.)</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <OField label="Est. Value (Cr.)"><Input type="number" step="0.01" /></OField>
+            <OField label="Supply"><Input type="number" step="0.01" /></OField>
+            <OField label="Service"><Input type="number" step="0.01" /></OField>
+            <OField label="C&S"><Input type="number" step="0.01" /></OField>
+            <OField label="Mech"><Input type="number" step="0.01" /></OField>
+            <OField label="E&I"><Input type="number" step="0.01" /></OField>
+            <OField label="Job Duration (Months)"><Input type="number" /></OField>
+            <OField label="Escalation (Y/N)">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["Y", "N"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+            <OField label="Mode of Bid Submission">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["Online", "Offline"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+          </div>
+        </section>
+
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Bid Cost / Guarantees</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <OField label="Cost of Tender (Rs.)"><Input type="number" /></OField>
+            <OField label="EMD Amt (Cr.)"><Input type="number" step="0.01" /></OField>
+            <OField label="EMD Type (BG/ISB/Fund)">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["BG", "ISB", "Fund"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+            <OField label="Validity (Days)"><Input type="number" /></OField>
+            <OField label="PBG Amt"><Input type="number" step="0.01" /></OField>
+            <OField label="PBG Type (BG/ISB)">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["BG", "ISB"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+            <OField label="ABG Amt"><Input type="number" step="0.01" /></OField>
+            <OField label="ABG Type (BG/ISB)">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["BG", "ISB", "NA"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+            <OField label="RA">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["Yes", "No"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+          </div>
+        </section>
+
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Submission & Outcome</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <OField label="Submitted on"><Input type="date" /></OField>
+            <OField label="Expected Bid Opening Date"><Input type="date" /></OField>
+            <OField label="RA Review Date"><Input type="date" /></OField>
+            <OField label="Status / Remarks"><Input placeholder="e.g. L1, awaiting LOI" /></OField>
+            <OField label="Participating Bidders"><Input placeholder="Comma-separated" /></OField>
+            <OField label="Probability">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["High", "Medium", "Low"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </OField>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <OField label="Lost Part Analysis"><Textarea rows={2} placeholder="If lost, capture reasons / gap analysis…" /></OField>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <OField label="Remarks"><Textarea rows={3} placeholder="Any internal notes…" /></OField>
+        </section>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button className="bg-brand-gradient text-brand-foreground" onClick={() => { toast.success("Offer saved (demo)"); onClose(); }}>Save offer</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
