@@ -9,13 +9,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Plus, Search, ListChecks, KanbanSquare, CalendarDays, MessageSquare, Paperclip,
   Link as LinkIcon, AlignLeft,
 } from "lucide-react";
 import {
-  type Task, type TaskStatus, TASK_STATUSES, taskStatusColor, priorityColor, userById, TENDERS,
+  type Task, type Priority, TASK_STATUSES, taskStatusColor, priorityColor, userById, TENDERS, OFFERS, TEAM,
 } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth";
 import { useTasks } from "@/lib/task-store";
@@ -31,9 +37,10 @@ export const Route = createFileRoute("/_authenticated/tasks")({ component: Tasks
 
 function TasksPage() {
   const { user } = useAuth();
-  const { tasks } = useTasks();
+  const { tasks, addTask } = useTasks();
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<Task | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
 
   const visible = useMemo(() => {
     return tasks.filter((t) => {
@@ -46,17 +53,23 @@ function TasksPage() {
     });
   }, [tasks, q, user]);
 
-  // Member view: group by linked tender
+  // Group by linked tender. For members: only tenders that actually have a task assigned to them.
   const byTender = useMemo(() => {
     const map = new Map<string, Task[]>();
     visible.forEach((t) => {
-      const key = t.linkedTo ?? "__none__";
-      const arr = map.get(key) ?? [];
+      if (!t.linkedTo) {
+        if (user?.role === "member") return;
+        const arr = map.get("__none__") ?? [];
+        arr.push(t);
+        map.set("__none__", arr);
+        return;
+      }
+      const arr = map.get(t.linkedTo) ?? [];
       arr.push(t);
-      map.set(key, arr);
+      map.set(t.linkedTo, arr);
     });
     return Array.from(map.entries());
-  }, [visible]);
+  }, [visible, user]);
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
@@ -65,9 +78,23 @@ function TasksPage() {
           <h1 className="text-2xl font-bold" style={{ fontFamily: "Sora, Inter" }}>Tasks</h1>
           <p className="text-sm text-muted-foreground">Plan, assign and track work across tenders and offers.</p>
         </div>
-        <Button className="bg-brand-gradient text-brand-foreground" onClick={() => toast.success("New task (demo)")}>
-          <Plus className="h-4 w-4 mr-2" />New Task
-        </Button>
+        {user?.role === "manager" && (
+          <Dialog open={newOpen} onOpenChange={setNewOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-brand-gradient text-brand-foreground">
+                <Plus className="h-4 w-4 mr-2" />New Task
+              </Button>
+            </DialogTrigger>
+            <NewTaskDialog
+              onClose={() => setNewOpen(false)}
+              onCreate={(data) => {
+                const created = addTask(data);
+                toast.success(`Task created: ${created.id}`, { description: `Assigned to ${userById(created.assignee)?.name}` });
+                setNewOpen(false);
+              }}
+            />
+          </Dialog>
+        )}
       </div>
 
       <Card className="shadow-card">
@@ -308,3 +335,98 @@ function TaskDetail({ task }: { task: Task }) {
     </>
   );
 }
+
+interface NewTaskInput {
+  title: string;
+  description: string;
+  priority: Priority;
+  assignee: string;
+  dueDate: string;
+  linkedTo?: string;
+}
+
+function NewTaskDialog({ onClose, onCreate }: { onClose: () => void; onCreate: (data: NewTaskInput) => void }) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<Priority>("High");
+  const [assignee, setAssignee] = useState<string>(TEAM.find((t) => t.role === "member")?.id ?? TEAM[0].id);
+  const [linkedTo, setLinkedTo] = useState<string>("__none__");
+  const [dueDate, setDueDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 10);
+  });
+
+  const members = TEAM.filter((m) => m.role === "member");
+
+  const submit = () => {
+    if (!title.trim()) { toast.error("Task title is required"); return; }
+    onCreate({
+      title: title.trim(),
+      description: description.trim(),
+      priority,
+      assignee,
+      dueDate,
+      linkedTo: linkedTo === "__none__" ? undefined : linkedTo,
+    });
+  };
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Create New Task</DialogTitle>
+        <DialogDescription>Assign work to a team member and optionally link it to a tender or offer.</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-2 max-h-[70vh] overflow-y-auto pr-1">
+        <div className="space-y-1.5">
+          <Label>Task title</Label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Prepare BOQ pricing sheet" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Description</Label>
+          <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Scope, deliverables, references…" />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label>Assign to</Label>
+            <Select value={assignee} onValueChange={setAssignee}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {members.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.name} — {m.designation}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Priority</Label>
+            <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{(["Critical", "High", "Medium", "Low"] as Priority[]).map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Link to</Label>
+            <Select value={linkedTo} onValueChange={setLinkedTo}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— None —</SelectItem>
+                {TENDERS.map((t) => <SelectItem key={t.id} value={t.id}>Tender · {t.id} — {t.name}</SelectItem>)}
+                {OFFERS.map((o) => <SelectItem key={o.id} value={o.id}>Offer · {o.id} — {o.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Due date</Label>
+            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button className="bg-brand-gradient text-brand-foreground" onClick={submit}>Create Task</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+

@@ -205,37 +205,143 @@ function TendersPage() {
   );
 }
 
-function AddTenderDialog({ onClose }: { onClose: () => void }) {
-  const [name, setName] = useState("");
-  const [customer, setCustomer] = useState("");
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <DialogContent className="max-w-2xl">
+    <div className="space-y-1.5">
+      <Label className="text-xs">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function AddTenderDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <DialogContent className="max-w-4xl">
       <DialogHeader>
         <DialogTitle>Add New Tender</DialogTitle>
-        <DialogDescription>Capture the essentials — you can enrich the record later.</DialogDescription>
+        <DialogDescription>Capture all fields from the BD Record Keeping template.</DialogDescription>
       </DialogHeader>
-      <div className="grid sm:grid-cols-2 gap-4 py-2">
-        <div className="space-y-1.5"><Label>Tender name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. EPC for Refinery Expansion" /></div>
-        <div className="space-y-1.5"><Label>Customer</Label><Input value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="e.g. IOCL Panipat" /></div>
-        <div className="space-y-1.5"><Label>Sector</Label>
-          <Select><SelectTrigger><SelectValue placeholder="Select sector" /></SelectTrigger>
-            <SelectContent>{["O&G", "Fertilizer", "Power", "Petrochem", "Steel"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5"><Label>Job type</Label>
-          <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-            <SelectContent>{["EPC", "LSTK", "Service", "IR", "Supply"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5"><Label>Estimated value (Cr)</Label><Input type="number" placeholder="0.00" /></div>
-        <div className="space-y-1.5"><Label>Due date</Label><Input type="date" /></div>
-        <div className="space-y-1.5"><Label>Bid opening</Label><Input type="date" /></div>
-        <div className="space-y-1.5"><Label>Priority</Label>
-          <Select><SelectTrigger><SelectValue placeholder="Select priority" /></SelectTrigger>
-            <SelectContent>{["Critical", "High", "Medium", "Low"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div className="sm:col-span-2 space-y-1.5"><Label>Remarks</Label><Textarea rows={3} placeholder="Any internal notes…" /></div>
+      <div className="max-h-[70vh] overflow-y-auto pr-1 space-y-5 py-2">
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Identification</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Field label="Sl. No."><Input placeholder="Auto / Manual" /></Field>
+            <Field label="TEL Tender Ref"><Input placeholder="TEL/26/008" /></Field>
+            <Field label="Name of Work"><Input placeholder="e.g. EPC for Refinery Expansion" /></Field>
+            <Field label="State"><Input placeholder="e.g. Gujarat" /></Field>
+            <Field label="Location"><Input placeholder="e.g. Vadodara" /></Field>
+            <Field label="Customer"><Input placeholder="e.g. IOCL" /></Field>
+            <Field label="Sector">
+              <Select><SelectTrigger><SelectValue placeholder="Select sector" /></SelectTrigger>
+                <SelectContent>{["O&G", "Fertilizer", "Power", "Petrochem", "Steel"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Job Type">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["EPC", "LSTK", "Service", "IR", "Supply"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Job Nature">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["Known", "Existing", "New"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Site"><Input placeholder="Site description" /></Field>
+            <Field label="PMC"><Input placeholder="e.g. EIL / PDIL" /></Field>
+          </div>
+        </section>
+
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Dates & Approvals</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Field label="Tender Publish Date"><Input type="date" /></Field>
+            <Field label="Original Due Date"><Input type="date" /></Field>
+            <Field label="Rev. Due Date"><Input type="date" /></Field>
+            <Field label="Go / No Go">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["Go", "No Go", "Pending"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Bid / No Bid Meeting"><Input type="date" /></Field>
+            <Field label="Bid / No Bid Approval Date"><Input type="date" /></Field>
+            <Field label="Internal Estimate Date"><Input type="date" /></Field>
+            <Field label="Participants in Review"><Input placeholder="Comma-separated names" /></Field>
+          </div>
+        </section>
+
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Team</div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Field label="BD Responsible Person">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{TEAM.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Supporting Team Lead">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{TEAM.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Estimate (Rs. in Cr. — Ex. GST)</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Field label="Estimate Amount (Cr.)"><Input type="number" step="0.01" /></Field>
+            <Field label="Supply"><Input type="number" step="0.01" /></Field>
+            <Field label="Service"><Input type="number" step="0.01" /></Field>
+            <Field label="C&S"><Input type="number" step="0.01" /></Field>
+            <Field label="Mech."><Input type="number" step="0.01" /></Field>
+            <Field label="E&I"><Input type="number" step="0.01" /></Field>
+            <Field label="Job Duration (Months)"><Input type="number" /></Field>
+            <Field label="Escalation (Y/N)">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["Y", "N"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Mode of Bid Submission">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["Online", "Offline"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Bid Cost / Guarantees</div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <Field label="Cost of Tender (Rs.)"><Input type="number" /></Field>
+            <Field label="EMD (Rs.) Crs"><Input type="number" step="0.01" /></Field>
+            <Field label="EMD Type (BG/ISB/Fund)">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["BG", "ISB", "Fund"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Validity (days)"><Input type="number" /></Field>
+            <Field label="PBG Amt"><Input type="number" step="0.01" /></Field>
+            <Field label="PBG Type (BG/ISB)">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["BG", "ISB"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="ABG Amt"><Input type="number" step="0.01" /></Field>
+            <Field label="ABG Type (BG/ISB)">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["BG", "ISB", "NA"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="RA">
+              <Select><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{["Yes", "No"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <Field label="Remarks"><Textarea rows={3} placeholder="Any internal notes…" /></Field>
+        </section>
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={onClose}>Cancel</Button>
@@ -244,6 +350,7 @@ function AddTenderDialog({ onClose }: { onClose: () => void }) {
     </DialogContent>
   );
 }
+
 
 function FileIcon({ ext }: { ext: string }) {
   const cls = "h-4 w-4";

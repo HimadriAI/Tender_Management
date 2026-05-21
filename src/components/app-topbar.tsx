@@ -6,13 +6,10 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { Bell, Search, Plus, Moon, Sun, LogOut, User2, Settings as SettingsIcon, FileText, FileSignature, ListChecks } from "lucide-react";
-import { useAuth } from "@/lib/auth";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Bell, Search, Plus, Moon, Sun, FileText, FileSignature, ListChecks } from "lucide-react";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { NOTIFICATIONS } from "@/lib/mock-data";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 const TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -29,8 +26,6 @@ const TITLES: Record<string, string> = {
 };
 
 export function AppTopbar() {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const [dark, setDark] = useState(false);
 
@@ -41,12 +36,6 @@ export function AppTopbar() {
 
   const unread = NOTIFICATIONS.filter((n) => n.unread).length;
   const title = TITLES[pathname] ?? "Workspace";
-
-  const handleSignOut = () => {
-    signOut();
-    toast.success("Signed out");
-    navigate({ to: "/login" });
-  };
 
   return (
     <header className="sticky top-0 z-30 h-16 border-b bg-card/85 backdrop-blur-xl">
@@ -68,7 +57,6 @@ export function AppTopbar() {
             <kbd className="hidden lg:inline-flex absolute right-2 top-1/2 -translate-y-1/2 items-center rounded border bg-card px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">⌘K</kbd>
           </div>
 
-          {/* Quick actions */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" className="bg-brand-gradient text-brand-foreground hover:opacity-95 gap-1.5">
@@ -89,7 +77,6 @@ export function AppTopbar() {
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
 
-          {/* Notifications */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full relative" aria-label="Notifications">
@@ -119,37 +106,6 @@ export function AppTopbar() {
               </div>
             </PopoverContent>
           </Popover>
-
-          {/* Profile */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 hover:bg-accent transition">
-                <div className="h-8 w-8 rounded-full bg-brand-gradient grid place-items-center text-brand-foreground text-xs font-semibold">
-                  {user?.name.split(" ").map((p) => p[0]).join("").slice(0, 2)}
-                </div>
-                <div className="hidden md:flex flex-col text-left leading-tight">
-                  <span className="text-xs font-semibold truncate max-w-[140px]">{user?.name}</span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {user?.role === "manager" ? "Business Manager" : "Team Member"}
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500 ml-1.5 align-middle" />
-                  </span>
-                </div>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="text-sm font-semibold">{user?.name}</div>
-                <div className="text-xs text-muted-foreground font-normal">{user?.email}</div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild><Link to="/profile"><User2 className="h-4 w-4 mr-2" />Profile</Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><Link to="/settings"><SettingsIcon className="h-4 w-4 mr-2" />Settings</Link></DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
-                <LogOut className="h-4 w-4 mr-2" />Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
     </header>

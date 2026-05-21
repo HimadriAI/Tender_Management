@@ -1,13 +1,18 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard, FileText, FileSignature, ListChecks, Calendar, FolderOpen,
-  BarChart3, Users, Bell, Settings, Building2,
+  BarChart3, Users, Building2, User2, Settings as SettingsIcon, LogOut, ChevronUp,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 const PRIMARY = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -21,17 +26,22 @@ const SECONDARY = [
   { title: "Forms Repository", url: "/documents", icon: FolderOpen },
   { title: "Reports & Analytics", url: "/reports", icon: BarChart3 },
   { title: "Team Management", url: "/team", icon: Users },
-  { title: "Notifications", url: "/notifications", icon: Bell },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const isActive = (p: string) => pathname === p || pathname.startsWith(p + "/");
+
+  const handleSignOut = () => {
+    signOut();
+    toast.success("Signed out");
+    navigate({ to: "/login" });
+  };
 
   const renderItem = (item: { title: string; url: string; icon: typeof Building2 }) => {
     const active = isActive(item.url);
@@ -91,20 +101,40 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border">
-        {!collapsed && user && (
-          <div className="px-2 py-2">
-            <Link to="/profile" className="flex items-center gap-3 rounded-md p-2 hover:bg-sidebar-accent transition">
-              <div className="h-8 w-8 rounded-full bg-brand-gradient grid place-items-center text-brand-foreground text-xs font-semibold">
-                {user.name.split(" ").map((p) => p[0]).join("").slice(0, 2)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-medium text-navy-foreground truncate">{user.name}</div>
-                <div className="text-[10px] uppercase tracking-wider text-navy-foreground/50 truncate">
-                  {user.role === "manager" ? "Business Manager" : "Team Member"}
+        {user && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-full flex items-center gap-3 rounded-md p-2 hover:bg-sidebar-accent transition text-left">
+                <div className="h-8 w-8 rounded-full bg-brand-gradient grid place-items-center text-brand-foreground text-xs font-semibold shrink-0">
+                  {user.name.split(" ").map((p) => p[0]).join("").slice(0, 2)}
                 </div>
-              </div>
-            </Link>
-          </div>
+                {!collapsed && (
+                  <>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-navy-foreground truncate">{user.name}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-navy-foreground/50 truncate">
+                        {user.role === "manager" ? "Business Manager" : "Team Member"}
+                      </div>
+                    </div>
+                    <ChevronUp className="h-4 w-4 text-navy-foreground/60 shrink-0" />
+                  </>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="start" className="w-56">
+              <DropdownMenuLabel>
+                <div className="text-sm font-semibold">{user.name}</div>
+                <div className="text-xs text-muted-foreground font-normal">{user.email}</div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild><Link to="/profile"><User2 className="h-4 w-4 mr-2" />Profile</Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link to="/settings"><SettingsIcon className="h-4 w-4 mr-2" />Settings</Link></DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+                <LogOut className="h-4 w-4 mr-2" />Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </SidebarFooter>
     </Sidebar>
