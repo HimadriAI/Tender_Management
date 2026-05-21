@@ -4,14 +4,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
 import { Plus, Search, Upload, Filter, Download, Paperclip, MoreHorizontal, FileSignature } from "lucide-react";
-import { OFFERS, type Offer, offerStatusColor, priorityColor, userById } from "@/lib/mock-data";
+import { OFFERS, TEAM, type Offer, offerStatusColor, priorityColor, userById } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -24,6 +29,7 @@ function OffersPage() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("All");
   const [selected, setSelected] = useState<Offer | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const visible = useMemo(() => {
     return OFFERS.filter((o) => {
@@ -48,7 +54,12 @@ function OffersPage() {
           {user?.role === "manager" && (
             <>
               <Button variant="outline" onClick={() => toast.info("Excel bulk import (demo)")}><Upload className="h-4 w-4 mr-2" />Bulk Import</Button>
-              <Button className="bg-brand-gradient text-brand-foreground" onClick={() => toast.success("New offer (demo)")}><Plus className="h-4 w-4 mr-2" />Add Offer</Button>
+              <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-brand-gradient text-brand-foreground"><Plus className="h-4 w-4 mr-2" />Add Offer</Button>
+                </DialogTrigger>
+                <AddOfferDialog onClose={() => setAddOpen(false)} />
+              </Dialog>
             </>
           )}
         </div>
