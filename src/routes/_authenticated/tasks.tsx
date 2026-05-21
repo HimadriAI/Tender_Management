@@ -15,28 +15,48 @@ import {
   Link as LinkIcon, AlignLeft,
 } from "lucide-react";
 import {
-  TASKS, type Task, type TaskStatus, TASK_STATUSES, taskStatusColor, priorityColor, userById,
+  type Task, type TaskStatus, TASK_STATUSES, taskStatusColor, priorityColor, userById, TENDERS,
 } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth";
+import { useTasks } from "@/lib/task-store";
 import { toast } from "sonner";
+
+function tenderName(id?: string) {
+  if (!id) return null;
+  const t = TENDERS.find((x) => x.id === id);
+  return t ? `${t.id} · ${t.name}` : id;
+}
 
 export const Route = createFileRoute("/_authenticated/tasks")({ component: TasksPage });
 
 function TasksPage() {
   const { user } = useAuth();
+  const { tasks } = useTasks();
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<Task | null>(null);
 
   const visible = useMemo(() => {
-    return TASKS.filter((t) => {
+    return tasks.filter((t) => {
       if (user?.role === "member" && t.assignee !== user.id) return false;
       if (q) {
         const s = q.toLowerCase();
-        return t.title.toLowerCase().includes(s) || t.id.toLowerCase().includes(s);
+        return t.title.toLowerCase().includes(s) || t.id.toLowerCase().includes(s) || (tenderName(t.linkedTo) ?? "").toLowerCase().includes(s);
       }
       return true;
     });
-  }, [q, user]);
+  }, [tasks, q, user]);
+
+  // Member view: group by linked tender
+  const byTender = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    visible.forEach((t) => {
+      const key = t.linkedTo ?? "__none__";
+      const arr = map.get(key) ?? [];
+      arr.push(t);
+      map.set(key, arr);
+    });
+    return Array.from(map.entries());
+  }, [visible]);
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
