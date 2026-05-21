@@ -9,13 +9,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Plus, Search, ListChecks, KanbanSquare, CalendarDays, MessageSquare, Paperclip,
   Link as LinkIcon, AlignLeft,
 } from "lucide-react";
 import {
-  type Task, type TaskStatus, TASK_STATUSES, taskStatusColor, priorityColor, userById, TENDERS,
+  type Task, type Priority, TASK_STATUSES, taskStatusColor, priorityColor, userById, TENDERS, OFFERS, TEAM,
 } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth";
 import { useTasks } from "@/lib/task-store";
@@ -31,9 +37,10 @@ export const Route = createFileRoute("/_authenticated/tasks")({ component: Tasks
 
 function TasksPage() {
   const { user } = useAuth();
-  const { tasks } = useTasks();
+  const { tasks, addTask } = useTasks();
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<Task | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
 
   const visible = useMemo(() => {
     return tasks.filter((t) => {
@@ -46,17 +53,23 @@ function TasksPage() {
     });
   }, [tasks, q, user]);
 
-  // Member view: group by linked tender
+  // Group by linked tender. For members: only tenders that actually have a task assigned to them.
   const byTender = useMemo(() => {
     const map = new Map<string, Task[]>();
     visible.forEach((t) => {
-      const key = t.linkedTo ?? "__none__";
-      const arr = map.get(key) ?? [];
+      if (!t.linkedTo) {
+        if (user?.role === "member") return;
+        const arr = map.get("__none__") ?? [];
+        arr.push(t);
+        map.set("__none__", arr);
+        return;
+      }
+      const arr = map.get(t.linkedTo) ?? [];
       arr.push(t);
-      map.set(key, arr);
+      map.set(t.linkedTo, arr);
     });
     return Array.from(map.entries());
-  }, [visible]);
+  }, [visible, user]);
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
@@ -65,9 +78,23 @@ function TasksPage() {
           <h1 className="text-2xl font-bold" style={{ fontFamily: "Sora, Inter" }}>Tasks</h1>
           <p className="text-sm text-muted-foreground">Plan, assign and track work across tenders and offers.</p>
         </div>
-        <Button className="bg-brand-gradient text-brand-foreground" onClick={() => toast.success("New task (demo)")}>
-          <Plus className="h-4 w-4 mr-2" />New Task
-        </Button>
+        {user?.role === "manager" && (
+          <Dialog open={newOpen} onOpenChange={setNewOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-brand-gradient text-brand-foreground">
+                <Plus className="h-4 w-4 mr-2" />New Task
+              </Button>
+            </DialogTrigger>
+            <NewTaskDialog
+              onClose={() => setNewOpen(false)}
+              onCreate={(data) => {
+                const created = addTask(data);
+                toast.success(`Task created: ${created.id}`, { description: `Assigned to ${userById(created.assignee)?.name}` });
+                setNewOpen(false);
+              }}
+            />
+          </Dialog>
+        )}
       </div>
 
       <Card className="shadow-card">
