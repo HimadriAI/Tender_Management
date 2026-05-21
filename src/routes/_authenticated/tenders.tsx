@@ -21,9 +21,11 @@ import {
   FileSpreadsheet, FileImage, FileArchive, FileType2, History, Paperclip, MessageSquare,
 } from "lucide-react";
 import {
-  TENDERS, TEAM, type Tender, priorityColor, tenderStatusColor, userById,
+  TENDERS, TEAM, type Tender, priorityColor, tenderStatusColor, taskStatusColor, userById,
 } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth";
+import { useTasks } from "@/lib/task-store";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/tenders")({ component: TendersPage });
@@ -253,6 +255,10 @@ function FileIcon({ ext }: { ext: string }) {
 }
 
 function TenderDetail({ tender }: { tender: Tender }) {
+  const { user } = useAuth();
+  const { tasksForTender, addTask } = useTasks();
+  const tenderTasks = tasksForTender(tender.id);
+  const [assignOpen, setAssignOpen] = useState(false);
   const lead = userById(tender.bdResponsible);
   const supp = userById(tender.supportingLead);
   const docs = [
@@ -277,12 +283,62 @@ function TenderDetail({ tender }: { tender: Tender }) {
       </SheetHeader>
 
       <Tabs defaultValue="overview" className="mt-4">
-        <TabsList className="grid grid-cols-4 w-full">
+        <TabsList className="grid grid-cols-5 w-full">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="tasks">Tasks ({tenderTasks.length})</TabsTrigger>
           <TabsTrigger value="documents">Documents ({docs.length})</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="tasks" className="space-y-3 mt-4">
+          {user?.role === "manager" && (
+            <div className="flex justify-end">
+              <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="bg-brand-gradient text-brand-foreground">
+                    <Plus className="h-4 w-4 mr-2" />Assign Task
+                  </Button>
+                </DialogTrigger>
+                <AssignTaskDialog
+                  tender={tender}
+                  onClose={() => setAssignOpen(false)}
+                  onAssign={(data) => {
+                    const created = addTask({ ...data, linkedTo: tender.id });
+                    toast.success(`Task assigned: ${created.id}`, { description: `Assigned to ${userById(created.assignee)?.name}` });
+                    setAssignOpen(false);
+                  }}
+                />
+              </Dialog>
+            </div>
+          )}
+          {tenderTasks.length === 0 ? (
+            <Card className="border-dashed"><CardContent className="p-6 text-center text-sm text-muted-foreground">
+              No tasks for this tender yet. {user?.role === "manager" && "Click Assign Task to create one."}
+            </CardContent></Card>
+          ) : (
+            <div className="divide-y border rounded-lg">
+              {tenderTasks.map((tk) => {
+                const u = userById(tk.assignee);
+                return (
+                  <div key={tk.id} className="p-3 flex items-center gap-3 hover:bg-accent/40">
+                    <div className="h-9 w-9 rounded-full bg-brand-gradient text-brand-foreground text-[10px] font-semibold grid place-items-center">{u?.initials}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{tk.title}</div>
+                      <div className="text-xs text-muted-foreground">{tk.id} · {u?.name} · Due {new Date(tk.dueDate).toLocaleDateString()}</div>
+                      <Progress value={tk.progress} className="h-1 mt-2" />
+                    </div>
+                    <div className="flex flex-col gap-1 items-end">
+                      <Badge variant="outline" className={priorityColor(tk.priority)}>{tk.priority}</Badge>
+                      <Badge variant="outline" className={taskStatusColor(tk.status)}>{tk.status}</Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
 
         <TabsContent value="overview" className="space-y-4 mt-4">
           <Card>
@@ -402,3 +458,89 @@ function TenderDetail({ tender }: { tender: Tender }) {
     </>
   );
 }
+
+interface AssignTaskData {
+  title: string;
+  description: string;
+  priority: "Critical" | "High" | "Medium" | "Low";
+  assignee: string;
+  dueDate: string;
+}
+
+function AssignTaskDialog({
+  tender,
+  onClose,
+  onAssign,
+}: {
+  tender: Tender;
+  onClose: () => void;
+  onAssign: (data: AssignTaskData) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<AssignTaskData["priority"]>("High");
+  const [assignee, setAssignee] = useState<string>(tender.assignedMembers[1] ?? tender.assignedMembers[0] ?? TEAM[1].id);
+  const [dueDate, setDueDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 10);
+  });
+
+  const candidates = TEAM.filter((m) => m.role === "member");
+
+  const submit = () => {
+    if (!title.trim()) {
+      toast.error("Task title is required");
+      return;
+    }
+    onAssign({ title: title.trim(), description: description.trim(), priority, assignee, dueDate });
+  };
+
+  return (
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Assign Task</DialogTitle>
+        <DialogDescription>Create and assign a task linked to <span className="font-medium text-foreground">{tender.id}</span> — {tender.name}.</DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-2">
+        <div className="space-y-1.5">
+          <Label>Task title</Label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Prepare technical compliance matrix" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Description</Label>
+          <Textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Scope, deliverables, references…" />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label>Assign to</Label>
+            <Select value={assignee} onValueChange={setAssignee}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {candidates.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.name} — {m.designation}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Priority</Label>
+            <Select value={priority} onValueChange={(v) => setPriority(v as AssignTaskData["priority"])}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{["Critical", "High", "Medium", "Low"].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Due date</Label>
+            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button className="bg-brand-gradient text-brand-foreground" onClick={submit}>Assign Task</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+

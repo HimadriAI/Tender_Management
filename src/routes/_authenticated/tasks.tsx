@@ -15,28 +15,48 @@ import {
   Link as LinkIcon, AlignLeft,
 } from "lucide-react";
 import {
-  TASKS, type Task, type TaskStatus, TASK_STATUSES, taskStatusColor, priorityColor, userById,
+  type Task, type TaskStatus, TASK_STATUSES, taskStatusColor, priorityColor, userById, TENDERS,
 } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth";
+import { useTasks } from "@/lib/task-store";
 import { toast } from "sonner";
+
+function tenderName(id?: string) {
+  if (!id) return null;
+  const t = TENDERS.find((x) => x.id === id);
+  return t ? `${t.id} · ${t.name}` : id;
+}
 
 export const Route = createFileRoute("/_authenticated/tasks")({ component: TasksPage });
 
 function TasksPage() {
   const { user } = useAuth();
+  const { tasks } = useTasks();
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<Task | null>(null);
 
   const visible = useMemo(() => {
-    return TASKS.filter((t) => {
+    return tasks.filter((t) => {
       if (user?.role === "member" && t.assignee !== user.id) return false;
       if (q) {
         const s = q.toLowerCase();
-        return t.title.toLowerCase().includes(s) || t.id.toLowerCase().includes(s);
+        return t.title.toLowerCase().includes(s) || t.id.toLowerCase().includes(s) || (tenderName(t.linkedTo) ?? "").toLowerCase().includes(s);
       }
       return true;
     });
-  }, [q, user]);
+  }, [tasks, q, user]);
+
+  // Member view: group by linked tender
+  const byTender = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    visible.forEach((t) => {
+      const key = t.linkedTo ?? "__none__";
+      const arr = map.get(key) ?? [];
+      arr.push(t);
+      map.set(key, arr);
+    });
+    return Array.from(map.entries());
+  }, [visible]);
 
   return (
     <div className="p-4 lg:p-6 space-y-6">
@@ -59,12 +79,52 @@ function TasksPage() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="board">
+      <Tabs defaultValue={user?.role === "member" ? "tenders" : "board"}>
         <TabsList>
           <TabsTrigger value="board"><KanbanSquare className="h-4 w-4 mr-2" />Kanban</TabsTrigger>
           <TabsTrigger value="list"><ListChecks className="h-4 w-4 mr-2" />List</TabsTrigger>
           <TabsTrigger value="timeline"><CalendarDays className="h-4 w-4 mr-2" />Timeline</TabsTrigger>
+          <TabsTrigger value="tenders"><LinkIcon className="h-4 w-4 mr-2" />By Tender</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="tenders" className="mt-4 space-y-4">
+          {byTender.length === 0 && <div className="text-sm text-muted-foreground p-6 text-center">No tasks assigned to you yet.</div>}
+          {byTender.map(([tid, list]) => {
+            const t = TENDERS.find((x) => x.id === tid);
+            return (
+              <Card key={tid} className="shadow-card">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t ? "Tender" : "Unlinked"}</div>
+                      <div className="font-semibold text-sm truncate">{t ? t.name : "No linked tender"}</div>
+                      {t && <div className="text-xs text-muted-foreground">{t.id} · {t.customer} · {t.location}, {t.state}</div>}
+                    </div>
+                    {t && <Badge variant="outline" className="shrink-0">{list.length} task{list.length > 1 ? "s" : ""}</Badge>}
+                  </div>
+                  <div className="divide-y border rounded-md">
+                    {list.map((tk) => {
+                      const u = userById(tk.assignee);
+                      return (
+                        <div key={tk.id} className="flex items-center gap-3 p-3 hover:bg-accent/40 cursor-pointer" onClick={() => setSelected(tk)}>
+                          <div className="h-8 w-8 rounded-full bg-brand-gradient text-brand-foreground text-[10px] font-semibold grid place-items-center">{u?.initials}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{tk.title}</div>
+                            <div className="text-xs text-muted-foreground">{tk.id} · Due {new Date(tk.dueDate).toLocaleDateString()}</div>
+                          </div>
+                          <Badge variant="outline" className={priorityColor(tk.priority)}>{tk.priority}</Badge>
+                          <Badge variant="outline" className={taskStatusColor(tk.status)}>{tk.status}</Badge>
+                          <div className="w-28 hidden sm:block"><Progress value={tk.progress} className="h-1.5" /></div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </TabsContent>
+
 
         <TabsContent value="board" className="mt-4">
           <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${TASK_STATUSES.length}, minmax(260px, 1fr))` }}>

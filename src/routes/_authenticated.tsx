@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { useAuth } from "@/lib/auth";
+import { TaskProvider } from "@/lib/task-store";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthLayout,
@@ -26,16 +27,18 @@ function AuthLayout() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        <SidebarInset className="flex flex-col min-w-0 flex-1">
-          <AppTopbar />
-          <main className="flex-1 min-w-0">
-            <Outlet />
-          </main>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+    <TaskProvider>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-background">
+          <AppSidebar />
+          <SidebarInset className="flex flex-col min-w-0 flex-1">
+            <AppTopbar />
+            <main className="flex-1 min-w-0">
+              <Outlet />
+            </main>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    </TaskProvider>
   );
 }
