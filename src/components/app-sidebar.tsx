@@ -3,6 +3,7 @@ import {
   LayoutDashboard, FileText, FileSignature, ListChecks, Calendar, FolderOpen,
   BarChart3, Users, Building2, User2, Settings as SettingsIcon, LogOut, ChevronUp,
 } from "lucide-react";
+import tenderLogo from "@/assets/logo-tender-management.png";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
@@ -69,9 +70,12 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-3 px-2 py-2">
+        <div className="flex items-center gap-2 px-2 py-2">
           <div className="h-9 w-9 rounded-lg bg-brand-gradient grid place-items-center shrink-0 shadow-elevated">
             <Building2 className="h-5 w-5 text-brand-foreground" />
+          </div>
+          <div className="h-9 w-9 rounded-lg bg-white grid place-items-center shrink-0 shadow-elevated overflow-hidden">
+            <img src={tenderLogo} alt="Tender Management" className="h-8 w-8 object-contain" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
