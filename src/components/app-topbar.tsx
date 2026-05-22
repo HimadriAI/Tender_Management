@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Bell, Search, Plus, Moon, Sun, FileText, FileSignature, ListChecks } from "lucide-react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { NOTIFICATIONS } from "@/lib/mock-data";
+import tuamanLogo from "@/assets/logo-tuaman.png";
 import { useEffect, useState } from "react";
 
 const TITLES: Record<string, string> = {
