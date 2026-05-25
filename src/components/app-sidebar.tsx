@@ -72,14 +72,14 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-2 py-2">
           {!collapsed && (
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0">
               <div className="font-semibold text-navy-foreground truncate" style={{ fontFamily: "Sora, Inter" }}>
                 BD Platform
               </div>
               <div className="text-[10px] uppercase tracking-wider text-navy-foreground/50">Enterprise</div>
             </div>
           )}
-          <div className="h-9 w-9 rounded-lg bg-white grid place-items-center shrink-0 shadow-elevated overflow-hidden ml-auto">
+          <div className="h-9 w-9 rounded-lg bg-white grid place-items-center shrink-0 shadow-elevated overflow-hidden">
             <img src={tenderLogo} alt="Tender Management" className="h-8 w-8 object-contain" />
           </div>
         </div>
