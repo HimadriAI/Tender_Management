@@ -78,10 +78,6 @@ export function AppTopbar() {
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
 
-          <div className="h-9 px-2 rounded-md bg-white border grid place-items-center shrink-0">
-            <img src={tuamanLogo} alt="Tuaman — A Complete EPC Solution" className="h-7 object-contain" />
-          </div>
-
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full relative" aria-label="Notifications">
@@ -111,6 +107,10 @@ export function AppTopbar() {
               </div>
             </PopoverContent>
           </Popover>
+
+          <div className="h-9 px-2 rounded-md bg-white border grid place-items-center shrink-0">
+            <img src={tuamanLogo} alt="Tuaman — A Complete EPC Solution" className="h-7 object-contain" />
+          </div>
         </div>
       </div>
     </header>
