@@ -44,7 +44,7 @@ function ForgotPage() {
           <div className="h-10 w-10 rounded-xl bg-brand-gradient grid place-items-center">
             <Building2 className="h-5 w-5 text-brand-foreground" />
           </div>
-          <div className="font-semibold">BD Platform</div>
+          <div className="font-semibold">Tender Management</div>
         </div>
 
         {step === 1 ? (

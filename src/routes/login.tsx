@@ -62,7 +62,7 @@ function LoginPage() {
               <Building2 className="h-6 w-6 text-brand-foreground" />
             </div>
             <div>
-              <div className="font-semibold tracking-tight" style={{ fontFamily: "Sora, Inter" }}>BD Platform</div>
+              <div className="font-semibold tracking-tight" style={{ fontFamily: "Sora, Inter" }}>Tender Management</div>
               <div className="text-xs text-navy-foreground/60">Enterprise Business Development</div>
             </div>
           </div>
@@ -83,7 +83,7 @@ function LoginPage() {
             </ul>
           </div>
 
-          <div className="text-xs text-navy-foreground/50">© 2026 BD Platform. All rights reserved.</div>
+          <div className="text-xs text-navy-foreground/50">© 2026 Tender Management. All rights reserved.</div>
         </div>
 
         {/* Right login card */}
@@ -93,7 +93,7 @@ function LoginPage() {
               <div className="h-10 w-10 rounded-xl bg-brand-gradient grid place-items-center">
                 <Building2 className="h-5 w-5 text-brand-foreground" />
               </div>
-              <div className="font-semibold">BD Platform</div>
+              <div className="font-semibold">Tender Management</div>
             </div>
 
             <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: "Sora, Inter" }}>Welcome back</h2>

@@ -77,7 +77,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="min-w-0 flex-1">
               <div className="font-semibold text-navy-foreground truncate" style={{ fontFamily: "Sora, Inter" }}>
-                BD Platform
+                Tender Management
               </div>
               <div className="text-[10px] uppercase tracking-wider text-navy-foreground/50">Enterprise</div>
             </div>
